@@ -1,0 +1,81 @@
+name: qliqy
+
+#TELEGRAM_POSTGRES_HOST
+#TELEGRAM_POSTGRES_PORT
+#TELEGRAM_POSTGRES_USER
+#TELEGRAM_POSTGRES_PASSWORD
+#TELEGRAM_POSTGRES_DB
+
+#RABBITMQ_HOST
+#RABBITMQ_PORT
+#RABBITMQ_USER
+#RABBITMQ_PASSWORD
+
+#TELEGRAM_REDIS_HOST
+#TELEGRAM_REDIS_PORT
+#TELEGRAM_REDIS_PASSWORD
+
+
+networks:
+  qliqy-network:
+    name: qliqy-network
+    external: true
+  traefik-network:
+    name: traefik-network
+    external: true
+
+x-logging: &formatted-logging
+  driver: json-file
+  options:
+    tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
+    max-size: "10m"
+    max-file: "3"
+    mode: "non-blocking"
+    max-buffer-size: "4m"
+
+x-common-env: &common-envs
+  APP_NAME: telegram
+  APP_STAND: ${APP_STAND:-prod}
+  APP_DEBUG: ${APP_DEBUG:-false}
+
+x-telegram-env: &telegram-envs
+  APP_PUBLIC_PATH: ${TELEGRAM_ENDPOINT:-}
+  REDIRECT_URI: ${TELEGRAM_REDIRECT_URI:-}
+  GUNICORN_MAX_WORKERS: ${TELEGRAM_WORKERS:-2}
+  FORMS_PUBLIC_BASE_URL: ${FORMS_PUBLIC_BASE_URL:-}
+  FORMS_PUBLIC_LOCAL_URL: ${FORMS_PUBLIC_LOCAL_URL:-http://localhost:8000/form}
+
+x-postgres-envs: &postgres-envs
+  POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+  POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+  POSTGRES_USER: ${POSTGRES_USER:-qliqy}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-qliqy-password}
+  POSTGRES_DB: qliqy_telegram
+
+x-redis-envs: &redis-envs
+  REDIS_HOST: ${REDIS_HOST:-redis}
+  REDIS_PORT: ${REDIS_PORT:-6379}
+  REDIS_PASSWORD: ${REDIS_PASSWORD:-qliqy-password}
+  REDIS_DB: ${TELEGRAM_REDIS_DB:-0}
+
+x-rabbitmq-envs: &rabbitmq-envs
+  RABBITMQ_HOST: ${RABBITMQ_HOST:-rabbitmq}
+  RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
+  RABBITMQ_USER: ${RABBITMQ_USER:-qliqy}
+  RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-qliqy-password}
+
+services:
+  telegram:
+    container_name: telegram
+    image: ghcr.io/qliqy/telegram:${TELEGRAM_VERSION_TAG:-latest}
+    restart: always
+    logging: *formatted-logging
+    environment:
+      <<: [
+        *common-envs,
+        *telegram-envs,
+        *postgres-envs,
+        *redis-envs,
+        *rabbitmq-envs,
+      ]
+    networks: [ qliqy-network, traefik-network ]

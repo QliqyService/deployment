@@ -1,0 +1,32 @@
+name: qliqy
+
+networks:
+  qliqy-network:
+    name: qliqy-network
+    external: true
+
+volumes:
+  redis-data:
+    name: qliqy-redis-data
+
+x-logging: &formatted-logging
+  driver: json-file
+  options:
+    tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
+    max-size: "10m"
+    max-file: "3"
+    mode: "non-blocking"
+    max-buffer-size: "4m"
+
+services:
+  redis:
+    container_name: redis
+    image: ghcr.io/dragonflydb/dragonfly:${DRAGONFLY_VERSION_TAG:-v1.34.2}
+    restart: always
+    networks: [qliqy-network]
+    logging: *formatted-logging
+    ulimits:
+      memlock: -1
+    volumes:
+      - redis-data:/data
+#    ports: ["6379:6379"]

@@ -1,0 +1,76 @@
+name: qliqy
+
+# APP_STAND
+# APP_DEBUG
+
+#MAIL_VERSION_TAG
+
+# RABBITMQ_HOST
+# RABBITMQ_PORT
+# RABBITMQ_USER
+# RABBITMQ_PASSWORD
+
+networks:
+  qliqy-network:
+    name: qliqy-network
+    external: true
+  traefik-network:
+    name: traefik-network
+    external: true
+
+x-logging: &formatted-logging
+  driver: json-file
+  options:
+    tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
+    max-size: "10m"
+    max-file: "3"
+    mode: "non-blocking"
+    max-buffer-size: "4m"
+
+x-common-env: &common-envs
+  APP_NAME: mail
+  APP_STAND: ${APP_STAND:-prod}
+  APP_DEBUG: ${APP_DEBUG:-false}
+
+x-rabbitmq-envs: &rabbitmq-envs
+  RABBITMQ_HOST: ${RABBITMQ_HOST:-rabbitmq}
+  RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
+  RABBITMQ_USER: ${RABBITMQ_USER:-qliqy}
+  RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-qliqy-password}
+
+x-postgres-envs: &postgres-envs
+  POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+  POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+  POSTGRES_USER: ${POSTGRES_USER:-qliqy}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-qliqy-password}
+  POSTGRES_DB: qliqy_mail
+
+x-redis-envs: &redis-envs
+  REDIS_HOST: ${REDIS_HOST:-redis}
+  REDIS_PORT: ${REDIS_PORT:-6379}
+  REDIS_PASSWORD: ${REDIS_PASSWORD:-qliqy-password}
+  REDIS_DB: ${TELEGRAM_REDIS_DB:-0}
+
+x-smtp-envs: &smtp-envs
+  SMTP_HOST: ${SMTP_HOST}
+  SMTP_PORT: ${SMTP_PORT:-587}
+  SMTP_USER: ${SMTP_USER}
+  SMTP_PASSWORD: ${SMTP_PASSWORD}
+  SMTP_USE_TLS: ${SMTP_USE_TLS:-true}
+  MAIL_FROM: ${MAIL_FROM}
+
+services:
+  mail:
+    container_name: mail
+    image: ghcr.io/qliqy/mail:${MAIL_VERSION_TAG:-latest}
+    restart: always
+    logging: *formatted-logging
+    environment:
+      <<: [
+        *common-envs,
+        *rabbitmq-envs,
+        *postgres-envs,
+        *redis-envs,
+        *smtp-envs,
+      ]
+    networks: [qliqy-network]

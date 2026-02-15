@@ -1,0 +1,100 @@
+name: qliqy
+
+# APP_STAND
+# APP_DEBUG
+# AUTH_SECRET_KEY
+# AUTH_ACCESS_TOKEN_EXPIRE_SECONDS
+
+# AUTH_WORKERS
+# AUTH_VERSION_TAG
+
+# AUTH_ENDPOINT
+# AUTH_REDIRECT_URI
+# AUTH_VERSION_TAG
+
+# AUTH_POSTGRES_DB
+# AUTH_POSTGRES_PASSWORD
+# AUTH_POSTGRES_USER
+# AUTH_POSTGRES_EXPOSED_PORT
+
+# AUTH_REDIS_HOST
+# AUTH_REDIS_PORT
+# AUTH_REDIS_PASSWORD
+# AUTH_REDIS_DB
+
+# RABBITMQ_HOST
+# RABBITMQ_PORT
+# RABBITMQ_USER
+# RABBITMQ_PASSWORD
+
+networks:
+  qliqy-network:
+    name: qliqy-network
+    external: true
+  traefik-network:
+    name: traefik-network
+    external: true
+
+x-logging: &formatted-logging
+  driver: json-file
+  options:
+    tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
+    max-size: "10m"
+    max-file: "3"
+    mode: "non-blocking"
+    max-buffer-size: "4m"
+
+x-common-env: &common-envs
+  APP_NAME: auth
+  APP_STAND: ${APP_STAND:-prod}
+  APP_DEBUG: ${APP_DEBUG:-false}
+  AUTH_SECRET_KEY: ${AUTH_SECRET_KEY:-supersecret}
+  AUTH_ACCESS_TOKEN_EXPIRE_SECONDS: ${AUTH_ACCESS_TOKEN_EXPIRE_SECONDS:-1209600}
+
+x-auth-env: &auth-envs
+  APP_PUBLIC_PATH: ${AUTH_ENDPOINT:-/auth}
+  REDIRECT_URI: ${AUTH_REDIRECT_URI:-}
+  GUNICORN_MAX_WORKERS: ${AUTH_WORKERS:-2}
+
+x-postgres-envs: &postgres-envs
+  POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+  POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+  POSTGRES_USER: ${POSTGRES_USER:-qliqy}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-qliqy-password}
+  POSTGRES_DB: qliqy_auth
+
+x-redis-envs: &redis-envs
+  REDIS_HOST: ${REDIS_HOST:-redis}
+  REDIS_PORT: ${EDIS_PORT:-6379}
+  REDIS_PASSWORD: ${REDIS_PASSWORD:-qliqy-password}
+  REDIS_DB: ${AUTH_REDIS_DB:-0}
+
+x-rabbitmq-envs: &rabbitmq-envs
+  RABBITMQ_HOST: ${RABBITMQ_HOST:-rabbitmq}
+  RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
+  RABBITMQ_USER: ${RABBITMQ_USER:-qliqy}
+  RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-qliqy-password}
+
+services:
+  auth:
+    container_name: auth
+    image: ghcr.io/qliqy/auth:${AUTH_VERSION_TAG:-latest}
+    restart: always
+    logging: *formatted-logging
+    environment:
+      <<: [
+        *common-envs,
+        *auth-envs,
+        *postgres-envs,
+        *redis-envs,
+        *rabbitmq-envs,
+      ]
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.auth.loadbalancer.server.port=8000
+      - traefik.http.services.auth.loadbalancer.passhostheader=true
+      - traefik.http.routers.auth.rule=Host(`${FRONTEND_DOMAIN:-app.qliqy.io}`) && (PathPrefix(`${AUTH_ENDPOINT:-/auth}`))
+      - traefik.http.routers.auth.entrypoints=https
+      - traefik.http.routers.auth.tls=true
+      - traefik.http.routers.auth.tls.certresolver=le-${APP_STAND}
+    networks: [qliqy-network, traefik-network]

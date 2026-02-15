@@ -1,0 +1,93 @@
+name: qliqy
+
+# TRAEFIK_EMAIL
+# TRAEFIK_BASIC_AUTH
+# TRAEFIK_DOMAIN
+
+networks:
+  traefik-network:
+    name: traefik-network
+    external: true
+
+volumes:
+  acme-data:
+    name: acme-data
+
+x-logging: &formatted-logging
+  driver: json-file
+  options:
+    tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
+    max-size: "10m"
+    max-file: "3"
+    mode: "non-blocking"
+    max-buffer-size: "4m"
+
+services:
+
+  traefik:
+    container_name: traefik
+    image: traefik:v3.4
+    restart: always
+    command:
+      # ==== Provider (docker) ====
+      - --providers.docker=true
+      - --providers.docker.endpoint=unix:///var/run/docker.sock
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=traefik-network
+      # ==== API (Dashboard) ====
+      - --api.dashboard=true
+      - --api.insecure=true
+      # ==== Entrypoints ====
+      - --entryPoints.http.address=:80
+      - --entryPoints.https.address=:443
+      - --entryPoints.metrics.address=:8082
+      # ==== SSL ====
+      - --certificatesresolvers.le-${APP_STAND}.acme.email=${TRAEFIK_EMAIL}
+      - --certificatesresolvers.le-${APP_STAND}.acme.storage=/certificates/le-${APP_STAND}-acme.json
+      - --certificatesresolvers.le-${APP_STAND}.acme.certificatesDuration=2160
+      - --certificatesresolvers.le-${APP_STAND}.acme.tlschallenge=true
+#      - --certificatesresolvers.le-${APP_STAND}.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
+      # ==== Logs ====
+      - --accesslog=true
+      - --log.level=INFO
+      # # ==== Metrics ====
+      - --metrics.prometheus=true
+      - --metrics.prometheus.addEntryPointsLabels=true
+      - --metrics.prometheus.addRoutersLabels=true
+      - --metrics.prometheus.addServicesLabels=true
+      - --ping=true
+      - --ping.entryPoint=metrics
+    labels:
+      - traefik.enable=true
+      # Middlewares
+      - traefik.http.middlewares.traefik-auth.basicauth.users=${TRAEFIK_BASIC_AUTH}
+      - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
+      - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
+      - traefik.http.middlewares.access-header.headers.accesscontrolallowheaders=*
+      # HTTP route
+      - traefik.http.routers.traefik-public.rule=Host(`${TRAEFIK_DOMAIN}`)
+      - traefik.http.routers.traefik-public.entrypoints=http
+      - traefik.http.routers.traefik-public.middlewares=https-redirect
+      # HTTPS route
+      - traefik.http.routers.traefik-public-secure.rule=Host(`${TRAEFIK_DOMAIN}`)
+      - traefik.http.routers.traefik-public-secure.entrypoints=https
+      - traefik.http.routers.traefik-public-secure.middlewares=traefik-auth
+      - traefik.http.routers.traefik-public-secure.service=api@internal
+      - traefik.http.routers.traefik-public-secure.tls=true
+      - traefik.http.routers.traefik-public-secure.tls.certresolver=le-${APP_STAND}
+      # Metrics route
+      - traefik.http.routers.metrics.rule=PathPrefix(`/metrics`)
+      - traefik.http.routers.metrics.entrypoints=metrics
+      - traefik.http.routers.metrics.service=prometheus@internal
+    healthcheck:
+      test: wget --quiet --tries=1 --spider http://0.0.0.0:8082/ping || exit 1
+      interval: 5s
+      timeout: 1s
+      retries: 3
+      start_period: 10s
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - acme-data:/certificates
+    ports: ["80:80", "443:443"]
+    logging: *formatted-logging
+    networks: [traefik-network]

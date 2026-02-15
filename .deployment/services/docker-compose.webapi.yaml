@@ -1,0 +1,105 @@
+name: qliqy
+
+# APP_STAND
+# APP_DEBUG
+# AUTH_SECRET_KEY
+# AUTH_ACCESS_TOKEN_EXPIRE_SECONDS
+
+# WEBAPI_WORKERS
+# WEBAPI_VERSION_TAG
+
+# WEBAPI_ENDPOINT
+# WEBAPI_REDIRECT_URI
+
+# WEBAPI_POSTGRES_DB
+# WEBAPI_POSTGRES_PASSWORD
+# WEBAPI_POSTGRES_USER
+# WEBAPI_POSTGRES_EXPOSED_PORT
+
+# WEBAPI_REDIS_HOST
+# WEBAPI_REDIS_PORT
+# WEBAPI_REDIS_DB
+
+# RABBITMQ_HOST
+# RABBITMQ_PORT
+# RABBITMQ_USER
+# RABBITMQ_PASSWORD
+
+networks:
+  qliqy-network:
+    name: qliqy-network
+    external: true
+  traefik-network:
+    name: traefik-network
+    external: true
+
+x-logging: &formatted-logging
+  driver: json-file
+  options:
+    tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
+    max-size: "10m"
+    max-file: "3"
+    mode: "non-blocking"
+    max-buffer-size: "4m"
+
+x-common-env: &common-envs
+  APP_NAME: webapi
+  APP_STAND: ${APP_STAND:-prod}
+  APP_DEBUG: ${APP_DEBUG:-false}
+
+x-auth-env: &auth-envs
+  AUTH_BACKEND_URL: ${AUTH_BACKEND_URL}
+  AUTH_SECRET_KEY: ${AUTH_SECRET_KEY:-supersecret}
+  AUTH_ACCESS_TOKEN_EXPIRE_SECONDS: ${AUTH_ACCESS_TOKEN_EXPIRE_SECONDS:-1209600}
+
+x-webapi-env: &webapi-envs
+  APP_PUBLIC_PATH: ${WEBAPI_ENDPOINT:-}
+  REDIRECT_URI: ${WEBAPI_REDIRECT_URI:-}
+  GUNICORN_MAX_WORKERS: ${WEBAPI_WORKERS:-2}
+  QRCODE_SERVICE_URL: ${QRCODE_SERVICE_URL:-http://qrcode-generator:8000/api/v1/qrcode}
+  FORMS_PUBLIC_BASE_URL: ${FORMS_PUBLIC_BASE_URL:-}
+  FORMS_PUBLIC_LOCAL_URL: ${FORMS_PUBLIC_LOCAL_URL:-http://localhost:8000/form}
+
+x-postgres-envs: &postgres-envs
+  POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+  POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+  POSTGRES_USER: ${POSTGRES_USER:-qliqy}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-qliqy-password}
+  POSTGRES_DB: qliqy_webapi
+
+x-rabbitmq-envs: &rabbitmq-envs
+  RABBITMQ_HOST: ${RABBITMQ_HOST:-rabbitmq}
+  RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
+  RABBITMQ_USER: ${RABBITMQ_USER:-qliqy}
+  RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-qliqy-password}
+
+services:
+  webapi:
+    container_name: webapi
+    image: ghcr.io/qliqy/webapi:${WEBAPI_VERSION_TAG:-latest}
+    restart: always
+    logging: *formatted-logging
+    environment:
+      <<: [
+        *common-envs,
+        *webapi-envs,
+        *auth-envs,
+        *postgres-envs,
+        *rabbitmq-envs,
+      ]
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.webapi.loadbalancer.server.port=8000
+      - traefik.http.services.webapi.loadbalancer.passhostheader=true
+      # API route
+      - traefik.http.routers.webapi.rule=Host(`${FRONTEND_DOMAIN}`) && (PathPrefix(`/api`) || Path(`/openapi.json`) || PathPrefix(`/v1/docs`))
+      - traefik.http.routers.webapi.entrypoints=https
+      - traefik.http.routers.webapi.tls=true
+      - traefik.http.routers.webapi.tls.certresolver=le-${APP_STAND}
+      # HTML PAGES route
+      - traefik.http.routers.webapi-pages.rule=Host(`${FRONTEND_DOMAIN}`) && PathPrefix(`/qliqy`)
+      - traefik.http.routers.webapi-pages.entrypoints=https
+      - traefik.http.routers.webapi-pages.tls=true
+      - traefik.http.routers.webapi-pages.tls.certresolver=le-${APP_STAND}
+      - traefik.http.routers.webapi-pages.service=webapi
+    networks: [ qliqy-network, traefik-network ]

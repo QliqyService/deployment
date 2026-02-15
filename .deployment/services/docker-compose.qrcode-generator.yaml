@@ -1,0 +1,52 @@
+name: qliqy
+
+# APP_STAND
+# APP_DEBUG
+
+# QRCODE_GENERATOR_VERSION_TAG
+
+# RABBITMQ_HOST
+# RABBITMQ_PORT
+# RABBITMQ_USER
+# RABBITMQ_PASSWORD
+
+networks:
+  qliqy-network:
+    name: qliqy-network
+    external: true
+  traefik-network:
+    name: traefik-network
+    external: true
+
+x-logging: &formatted-logging
+  driver: json-file
+  options:
+    tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
+    max-size: "10m"
+    max-file: "3"
+    mode: "non-blocking"
+    max-buffer-size: "4m"
+
+x-common-env: &common-envs
+  APP_NAME: qrcode_generator
+  APP_STAND: ${APP_STAND:-prod}
+  APP_DEBUG: ${APP_DEBUG:-false}
+
+x-rabbitmq-envs: &rabbitmq-envs
+  RABBITMQ_HOST: ${RABBITMQ_HOST:-rabbitmq}
+  RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
+  RABBITMQ_USER: ${RABBITMQ_USER:-qliqy}
+  RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-qliqy-password}
+
+services:
+  qrcode-generator:
+    container_name: qrcode-generator
+    image: ghcr.io/qliqy/qrcode-generator:${QRCODE_GENERATOR_VERSION_TAG:-latest}
+    restart: always
+    logging: *formatted-logging
+    environment:
+      <<: [
+        *common-envs,
+        *rabbitmq-envs,
+      ]
+    networks: [qliqy-network]

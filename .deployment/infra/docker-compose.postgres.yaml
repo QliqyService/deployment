@@ -1,0 +1,44 @@
+name: qliqy
+
+# POSTGRES_USER
+# POSTGRES_PASSWORD
+# POSTGRES_MAX_CONNECTIONS
+# POSTGRES_EXPOSED_PORT
+
+networks:
+  qliqy-network:
+    name: qliqy-network
+    external: true
+
+volumes:
+  db-data:
+    name: qliqy-postgres-data
+
+x-logging: &formatted-logging
+  driver: json-file
+  options:
+    tag: '{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}'
+    max-size: '10m'
+    max-file: '3'
+    mode: 'non-blocking'
+    max-buffer-size: '4m'
+
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:18
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-qliqy}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-qliqy-password}
+      POSTGRES_DB: postgres
+    healthcheck:
+      test: pg_isready --username=${POSTGRES_USER:-qliqy} --dbname=postgres
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    command: postgres -c max_connections=${POSTGRES_MAX_CONNECTIONS:-300}
+    volumes: [db-data:/var/lib/postgresql]
+    logging: *formatted-logging
+    networks: [qliqy-network]
+    ports: ["${POSTGRES_EXPOSED_PORT}:5432"]
