@@ -26,7 +26,7 @@ services:
 
   traefik:
     container_name: traefik
-    image: traefik:v3.4
+    image: traefik:v3.6.1
     restart: always
     command:
       # ==== Provider (docker) ====
@@ -65,17 +65,18 @@ services:
       - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
       - traefik.http.middlewares.access-header.headers.accesscontrolallowheaders=*
       # HTTP route
-      - traefik.http.routers.traefik-public.rule=Host(`${TRAEFIK_DOMAIN}`)
+      - traefik.http.routers.traefik-public.rule=Host(`traefik.${TRAEFIK_DOMAIN}`)
       - traefik.http.routers.traefik-public.entrypoints=http
       - traefik.http.routers.traefik-public.middlewares=https-redirect
       # HTTPS route
-      - traefik.http.routers.traefik-public-secure.rule=Host(`${TRAEFIK_DOMAIN}`)
+      - traefik.http.routers.traefik-public-secure.rule=Host(`traefik.${TRAEFIK_DOMAIN}`)
       - traefik.http.routers.traefik-public-secure.entrypoints=https
       - traefik.http.routers.traefik-public-secure.middlewares=traefik-auth
       - traefik.http.routers.traefik-public-secure.service=api@internal
       - traefik.http.routers.traefik-public-secure.tls=true
       - traefik.http.routers.traefik-public-secure.tls.certresolver=le-${APP_STAND}
-      # Metrics route
+      - traefik.http.routers.traefik-public-secure.tls.domains[0].main=traefik.${TRAEFIK_DOMAIN}
+      # Metrics routemake
       - traefik.http.routers.metrics.rule=PathPrefix(`/metrics`)
       - traefik.http.routers.metrics.entrypoints=metrics
       - traefik.http.routers.metrics.service=prometheus@internal
