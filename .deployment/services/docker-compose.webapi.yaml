@@ -103,3 +103,9 @@ services:
       - traefik.http.routers.webapi-pages.tls.certresolver=le-${APP_STAND}
       - traefik.http.routers.webapi-pages.service=webapi
     networks: [ qliqy-network, traefik-network ]
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/api/v1/shared/healthcheck" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
