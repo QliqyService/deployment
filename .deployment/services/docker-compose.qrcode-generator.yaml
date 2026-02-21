@@ -50,9 +50,9 @@ services:
         *rabbitmq-envs,
       ]
     networks: [qliqy-network]
-  healthcheck:
-    test: [ "CMD", "curl", "-f", "http://localhost:8000/api/v1/shared/healthcheck" ]
-    interval: 10s
-    timeout: 5s
-    retries: 5
-    start_period: 20s
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/api/v1/shared/healthcheck" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
