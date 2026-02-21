@@ -1,3 +1,21 @@
+#!make
+# LOAD .env
+define load_env
+    $(eval include .env)
+    $(eval export)
+endef
+
+#AUTH
+pull-auth: ## 🔄 Qliqy Auth
+	$(call load_env)
+	@docker compose -f .deployment/services/docker-compose.auth.yaml pull
+up-auth: ## 🟢 Qliqy Auth
+	$(call load_env)
+	@docker compose -f .deployment/services/docker-compose.auth.yaml up -d
+down-auth: ## 🔴 Qliqy Auth
+	$(call load_env)
+	@docker compose -f .deployment/services/docker-compose.auth.yaml down
+rebuild-auth: $(call load_env) down-auth pull-auth up-auth ## 🔥 Qliqy Auth
 
 #QRCODE_GENERATOR
 pull-qrcode-generator: ## 🔄 QR-Code Generator
