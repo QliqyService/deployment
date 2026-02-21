@@ -67,7 +67,7 @@ x-rabbitmq-envs: &rabbitmq-envs
 services:
   telegram:
     container_name: telegram
-    image: ghcr.io/qliqy/telegram:${TELEGRAM_VERSION_TAG:-latest}
+    image: ghcr.io/qliqyservice/telegram:${TELEGRAM_VERSION_TAG:-latest}
     restart: always
     logging: *formatted-logging
     environment:

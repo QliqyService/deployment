@@ -62,7 +62,7 @@ x-smtp-envs: &smtp-envs
 services:
   mail:
     container_name: mail
-    image: ghcr.io/qliqy/mail:${MAIL_VERSION_TAG:-latest}
+    image: ghcr.io/qliqyservice/mail:${MAIL_VERSION_TAG:-latest}
     restart: always
     logging: *formatted-logging
     environment:

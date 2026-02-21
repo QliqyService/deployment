@@ -41,7 +41,7 @@ x-rabbitmq-envs: &rabbitmq-envs
 services:
   qrcode-generator:
     container_name: qrcode-generator
-    image: ghcr.io/qliqy/qrcode-generator:${QRCODE_GENERATOR_VERSION_TAG:-latest}
+    image: ghcr.io/qliqyservice/qrcode-generator:${QRCODE_GENERATOR_VERSION_TAG:-latest}
     restart: always
     logging: *formatted-logging
     environment:
