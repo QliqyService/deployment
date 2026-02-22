@@ -44,6 +44,7 @@ x-telegram-env: &telegram-envs
   GUNICORN_MAX_WORKERS: ${TELEGRAM_WORKERS:-2}
   FORMS_PUBLIC_BASE_URL: ${FORMS_PUBLIC_BASE_URL:-}
   FORMS_PUBLIC_LOCAL_URL: ${FORMS_PUBLIC_LOCAL_URL:-http://localhost:8000/form}
+  TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
 
 x-postgres-envs: &postgres-envs
   POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
