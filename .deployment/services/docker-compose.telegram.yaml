@@ -80,7 +80,7 @@ services:
       ]
     networks: [ qliqy-network, traefik-network ]
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8000/api/v1/shared/healthcheck" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/healthcheck" ]
       interval: 10s
       timeout: 5s
       retries: 5
