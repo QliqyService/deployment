@@ -8,8 +8,8 @@
 name: gen2chat
 
 networks:
-  infra-network:
-    name: infra-network
+  qliqy-network:
+    name: qliqy-network
     external: true
   traefik-network:
     name: traefik-network
@@ -76,4 +76,4 @@ services:
       - minio-data:/data
       - minio-certs:/certs
     logging: *formatted-logging
-    networks: [infra-network, traefik-network]
+    networks: [qliqy-network, traefik-network]
