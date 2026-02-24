@@ -92,7 +92,7 @@ services:
       - traefik.http.services.webapi.loadbalancer.server.port=8000
       - traefik.http.services.webapi.loadbalancer.passhostheader=true
       # API route
-      - traefik.http.routers.webapi.rule=Host(`${FRONTEND_DOMAIN}`) && (PathPrefix(`/api`) || Path(`/openapi.json`) || PathPrefix(`/v1/docs`))
+      - traefik.http.routers.webapi.rule=Host(`${FRONTEND_DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/form`) || Path(`/openapi.json`) || PathPrefix(`/v1/docs`))
       - traefik.http.routers.webapi.entrypoints=https
       - traefik.http.routers.webapi.tls=true
       - traefik.http.routers.webapi.tls.certresolver=le-${APP_STAND}
