@@ -33,6 +33,13 @@ down-traefik: ## 🔴 Traefik
 	$(call load_env)
 	@docker compose -f .deployment/infra/docker-compose.traefik.yaml down
 
+up-minio: ## 🟢 Minio
+	$(call load_env)
+	@docker compose -f .deployment/infra/docker-compose.minio.yaml up -d
+down-minio: ## 🔴 Minio
+	$(call load_env)
+	@docker compose -f .deployment/infra/docker-compose.minio.yaml down
+
 up-infra: up-rabbitmq up-postgres ## 🟢 Сервисы инфраструктуры
 down-infra: down-postgres down-rabbitmq ## 🔴 Сервисы инфраструктуры
 
