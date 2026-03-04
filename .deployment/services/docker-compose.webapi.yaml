@@ -94,7 +94,7 @@ services:
         *auth-envs,
         *postgres-envs,
         *rabbitmq-envs,
-        *&s3-envs,
+        *s3-envs,
       ]
     labels:
       - traefik.enable=true
