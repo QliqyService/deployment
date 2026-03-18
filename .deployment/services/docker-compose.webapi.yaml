@@ -98,19 +98,23 @@ services:
       ]
     labels:
       - traefik.enable=true
+      - traefik.docker.network=traefik-network
       - traefik.http.services.webapi.loadbalancer.server.port=8000
       - traefik.http.services.webapi.loadbalancer.passhostheader=true
-      # API route
+
       - traefik.http.routers.webapi.rule=Host(`${FRONTEND_DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/public`) || PathPrefix(`/form`) || Path(`/openapi.json`) || PathPrefix(`/v1/docs`))
       - traefik.http.routers.webapi.entrypoints=https
       - traefik.http.routers.webapi.tls=true
       - traefik.http.routers.webapi.tls.certresolver=le-${APP_STAND}
-      # HTML PAGES route
+      - traefik.http.routers.webapi.service=webapi
+      - traefik.http.routers.webapi.priority=100
+
       - traefik.http.routers.webapi-pages.rule=Host(`${FRONTEND_DOMAIN}`) && PathPrefix(`/qliqy`)
       - traefik.http.routers.webapi-pages.entrypoints=https
       - traefik.http.routers.webapi-pages.tls=true
       - traefik.http.routers.webapi-pages.tls.certresolver=le-${APP_STAND}
       - traefik.http.routers.webapi-pages.service=webapi
+      - traefik.http.routers.webapi-pages.priority=90
     networks: [ qliqy-network, traefik-network ]
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8000/api/v1/shared/healthcheck" ]
