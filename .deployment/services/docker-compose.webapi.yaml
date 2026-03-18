@@ -84,7 +84,7 @@ x-s3-envs: &s3-envs
 services:
   webapi:
     container_name: webapi
-    image: ghcr.io/qliqyservice/webapi:${WEBAPI_VERSION_TAG:-latest}
+    image: ghcr.io/qliqyservice/webapi:${WEBAPI_VERSION_TAG:-stable}
     restart: always
     logging: *formatted-logging
     environment:
