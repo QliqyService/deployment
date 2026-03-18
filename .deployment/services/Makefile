@@ -65,16 +65,28 @@ down-mail: ## 🔴 Qliqy Mail
 	@docker compose -f .deployment/services/docker-compose.mail.yaml down
 rebuild-mail: $(call load_env) down-mail pull-mail up-mail ## 🔥 Qliqy Mail
 
+#FRONTEND
+pull-frontend: ## 🔄 Qliqy Frontend
+	$(call load_env)
+	@docker compose -f .deployment/services/docker-compose.frontend.yaml pull
+up-frontend: ## 🟢 Qliqy Frontend
+	$(call load_env)
+	@docker compose -f .deployment/services/docker-compose.frontend.yaml up -d
+down-frontend: ## 🔴 Qliqy Frontend
+	$(call load_env)
+	@docker compose -f .deployment/services/docker-compose.frontend.yaml down
+rebuild-frontend: $(call load_env) down-frontend pull-frontend up-frontend ## 🔥 Qliqy Frontend
+
 # All-Services
 pull-all: ## 🔄 All-Services
 	$(call load_env)
-	@$(MAKE) pull-auth pull-qrcode-generator pull-webapi pull-telegram pull-mail
+	@$(MAKE) pull-auth pull-qrcode-generator pull-webapi pull-telegram pull-mail pull-frontend
 up-all: ## 🟢 All-Services
 	$(call load_env)
-	@$(MAKE) up-auth up-qrcode-generator up-webapi up-telegram up-mail
+	@$(MAKE) up-auth up-qrcode-generator up-webapi up-telegram up-mail up-frontend
 down-all: ## 🔴 All-Services
 	$(call load_env)
-	@$(MAKE) down-auth down-qrcode-generator down-webapi down-telegram down-mail
+	@$(MAKE) down-auth down-qrcode-generator down-webapi down-telegram down-mail down-frontend
 rebuild-all: ## 🔥 All-Services
 	$(call load_env)
 	@$(MAKE) down-all pull-all up-all
