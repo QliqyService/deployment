@@ -29,6 +29,7 @@ services:
     container_name: frontend
     image: ghcr.io/qliqyservice/frontend:${FRONTEND_VERSION_TAG:-stable}
     restart: always
+    init: true
     logging: *formatted-logging
     environment:
       <<: [*common-envs]
@@ -53,7 +54,7 @@ services:
     networks: [ qliqy-network, traefik-network ]
     healthcheck:
       test: [ "CMD", "wget", "-qO-", "http://127.0.0.1/healthz" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s

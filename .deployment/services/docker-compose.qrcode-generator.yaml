@@ -43,6 +43,7 @@ services:
     container_name: qrcode-generator
     image: ghcr.io/qliqyservice/qrcode-generator:${QRCODE_GENERATOR_VERSION_TAG:-latest}
     restart: always
+    init: true
     logging: *formatted-logging
     environment:
       <<: [
@@ -52,7 +53,7 @@ services:
     networks: [qliqy-network]
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/healthcheck"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s

@@ -41,7 +41,7 @@ x-common-env: &common-envs
 x-telegram-env: &telegram-envs
   APP_PUBLIC_PATH: ${TELEGRAM_ENDPOINT:-}
   REDIRECT_URI: ${TELEGRAM_REDIRECT_URI:-}
-  GUNICORN_MAX_WORKERS: ${TELEGRAM_WORKERS:-2}
+  GUNICORN_MAX_WORKERS: ${TELEGRAM_WORKERS:-1}
   FORMS_PUBLIC_BASE_URL: ${FORMS_PUBLIC_BASE_URL:-}
   FORMS_PUBLIC_LOCAL_URL: ${FORMS_PUBLIC_LOCAL_URL:-http://localhost:8000/form}
   TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
@@ -70,6 +70,7 @@ services:
     container_name: telegram
     image: ghcr.io/qliqyservice/telegram:${TELEGRAM_VERSION_TAG:-latest}
     restart: always
+    init: true
     logging: *formatted-logging
     environment:
       <<: [
@@ -82,7 +83,7 @@ services:
     networks: [ qliqy-network, traefik-network ]
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8000/healthcheck" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
